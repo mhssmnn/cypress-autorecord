@@ -14,13 +14,8 @@ const blacklistRoutes = cypressConfig.blacklistRoutes || [];
 const whitelistHeaders = cypressConfig.whitelistHeaders || [];
 const supportedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD'];
 
-const fileName = path.basename(
-    Cypress.spec.name,
-    path.extname(Cypress.spec.name),
-);
 // The replace fixes Windows path handling
 const fixturesFolder = Cypress.config('fixturesFolder').replace(/\\/g, '/');
-const fixturesFolderSubDirectory = fileName.replace(/\./, '-');
 const mocksFolder = path.join(fixturesFolder, '../mocks');
 
 before(function() {
@@ -55,12 +50,16 @@ module.exports = function autoRecord() {
 
   before(function() {
     // Get mock data that relates to this spec file
+    const fileName = getFileName(this.currentTest);
     cy.task('readFile', path.join(mocksFolder, `${fileName}.json`)).then((data) => {
       routesByTestId = data === null ? {} : data;
     });
   });
 
   beforeEach(function() {
+    const fileName = getFileName(this.currentTest);
+    const fixturesFolderSubDirectory = getFixturesSubFolder(fileName);
+
     // Reset routes before each test case
     routes = [];
 
@@ -201,6 +200,9 @@ module.exports = function autoRecord() {
   });
 
   afterEach(function() {
+    const fileName = getFileName(this.currentTest);
+    const fixturesFolderSubDirectory = getFixturesSubFolder(fileName);
+
     // Check to see if the current test already has mock data or if forceRecord is on
     if (
       (!routesByTestId[this.currentTest.title]
@@ -256,6 +258,9 @@ module.exports = function autoRecord() {
   });
 
   after(function() {
+    const fileName = getFileName(this.currentTest);
+    const fixturesFolderSubDirectory = getFixturesSubFolder(fileName);
+
     // Transfer used mock data to new object to be stored locally
     if (isCleanMocks) {
       Object.keys(routesByTestId).forEach((testName) => {
@@ -278,3 +283,14 @@ module.exports = function autoRecord() {
     });
   });
 };
+
+function getFileName(currentTest) {
+  return path.basename(
+    currentTest.invocationDetails.relativeFile,
+    path.extname(currentTest.invocationDetails.relativeFile),
+  );
+}
+
+function getFixturesSubFolder(mockFilename) {
+  mockFilename.replace(/\./, '-');
+}
