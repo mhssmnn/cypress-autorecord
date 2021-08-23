@@ -151,7 +151,6 @@ module.exports = function autoRecord() {
 
       const createStubbedRoute = (method, url) => {
         let index = 0;
-        const response = sortedRoutes[method][url][index];
 
         cy.intercept(
           {
@@ -159,22 +158,22 @@ module.exports = function autoRecord() {
             method,
           },
           (req) => {
-            req.reply((res) => {
-              const newResponse = sortedRoutes[method][url][index];
-              res.send(
-                newResponse.status,
-                newResponse.fixtureId
-                  ? {
-                      fixture: `${fixturesFolderSubDirectory}/${newResponse.fixtureId}.json`,
-                    }
-                  : newResponse.response,
-                newResponse.headers,
-              );
+            const newResponse = sortedRoutes[method][url][index];
 
-              if (sortedRoutes[method][url].length > index + 1) {
-                index++;
-              }
-            });
+            const response = {
+              statusCode: newResponse.status,
+              body: newResponse.response,
+              fixture: newResponse.fixtureId
+                ? `${fixturesFolderSubDirectory}/${newResponse.fixtureId}.json`
+                : undefined,
+              headers: newResponse.headers,
+            };
+
+            req.reply(response);
+
+            if (sortedRoutes[method][url].length > index + 1) {
+              index++;
+            }
           },
         );
       };
