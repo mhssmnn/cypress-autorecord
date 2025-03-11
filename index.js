@@ -89,7 +89,7 @@ module.exports = function autoRecord() {
         const body = req.body;
         const status = res.statusCode;
         const data =
-          res.body.constructor.name === 'Blob'
+          res.body?.constructor?.name === 'Blob'
             ? blobToPlain(res.body)
             : res.body;
         const headers = Object.entries(res.headers)
